@@ -22,6 +22,7 @@ FILE* fdiskout;
 
 static int f_num = 0;
 
+void initFilePointers();
 FILE* get_file_pointer(const char file_name, char mode);
 
 #endif

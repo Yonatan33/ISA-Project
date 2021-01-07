@@ -2,11 +2,6 @@
 
 #include "files.h"
 
-// we expact to get 13 files
-if (argc != 14) {
-	printf("Not enough input files. Exit program.\n");
-	exit(1);
-}
 
 
 
@@ -26,16 +21,18 @@ FILE* get_file_pointer(const char file_name, char mode) {
 }
 
 // initialize all file ptrs:
-fimemin = get_file_pointer(argv[f_num], "r");
-fdmemin = get_file_pointer(argv[f_num], "r");
-fdiskin = get_file_pointer(argv[f_num], "r");
-firq2in = get_file_pointer(argv[f_num], "r");
-fdmemout = get_file_pointer(argv[f_num], "w");
-fregout = get_file_pointer(argv[f_num], "w");
-ftrace = get_file_pointer(argv[f_num], "w");
-fhwregtrace = get_file_pointer(argv[f_num], "w");
-fcycles = get_file_pointer(argv[f_num], "w");
-fleds = get_file_pointer(argv[f_num], "w");
-fmonitor = get_file_pointer(argv[f_num], "w");
-fmonitor2 = get_file_pointer(argv[f_num], "w");
-fdiskout = get_file_pointer(argv[f_num], "w");
+void initFilePointers(char** argv) {
+	fimemin = get_file_pointer(argv[f_num], "r");
+	fdmemin = get_file_pointer(argv[f_num], "r");
+	fdiskin = get_file_pointer(argv[f_num], "r");
+	firq2in = get_file_pointer(argv[f_num], "r");
+	fdmemout = get_file_pointer(argv[f_num], "w");
+	fregout = get_file_pointer(argv[f_num], "w");
+	ftrace = get_file_pointer(argv[f_num], "w");
+	fhwregtrace = get_file_pointer(argv[f_num], "w");
+	fcycles = get_file_pointer(argv[f_num], "w");
+	fleds = get_file_pointer(argv[f_num], "w");
+	fmonitor = get_file_pointer(argv[f_num], "w");
+	fmonitor2 = get_file_pointer(argv[f_num], "w");
+	fdiskout = get_file_pointer(argv[f_num], "w");
+}

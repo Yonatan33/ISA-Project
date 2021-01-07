@@ -16,5 +16,3 @@ Register registersArray[NUMBER_OF_REGISTERS];
 
 
 #endif // !REGISTERS
-
-

@@ -5,7 +5,15 @@
 #include "registers.h";
 
 
-int main() {
+int main(int argc, char *argv[]) {
+	// we expact to get 13 files
+	if (argc != 14) {
+		printf("Not enough input files. Exit program.\n");
+		exit(1);
+	}
+	initFilePointers(argv);
+
+
 	static int PC = 0;
 	fetch & decode // taking instruction from imem, execute
 
@@ -13,7 +21,7 @@ int main() {
 
 
 
-	return 0;
+		return 0;
 }
 
 
