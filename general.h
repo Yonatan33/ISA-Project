@@ -2,7 +2,7 @@
 #define GENERAL
 
 
-#include "files.h"
+#include "fileHandlers.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -29,7 +29,7 @@ typedef struct iMEMCommand {
 
 void(* instructionFuncArray[NUM_OF_OPCODES])(unsigned int, unsigned int, unsigned int);		/*An array holding all function pointers for executing each instruction. */
 // create new instruction
-Inst instructionArray[MAX_IMEM_SIZE]; /*An array to hold all instructions read from imem file. instruction's PC is its array index*/
+Inst instructionArray[MAX_IMEM_SIZE]; /*An array to hold all instructions read from imem file. instruction's PC is its array index. Memory pre-allocated, no need for dynamic*/
 void initInstructionArray(); 
 
 

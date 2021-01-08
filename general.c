@@ -2,7 +2,7 @@
 
 #include <stdio.h>;
 #include "general.h"
-#include "files.h"
+#include "fileHandlers.h"
 #include "registers.h"
 
 // Read all lines from the input file
@@ -29,14 +29,14 @@ void initInstructionArray() {
 			}
 		}
 		localPC++;
-	}
-
-	
+	}	
 }
 
 
 
-
+void jumpTenBits(unsigned int rd) {
+	PC = registersArray[rd].value & 0x3FF;
+}
 
 //Instruction *currInstruction: pointer to the current instruction on the memory
 //Functionality: function adds the arguments in register rs and rt, saves it to rd
@@ -108,31 +108,112 @@ void srl(unsigned int rd, unsigned int rs, unsigned int rt) {
 		(unsigned)registersArray[rs].value >> registersArray[rt].value;
 }
 
-
-instructionFuncArray = {
-	{&add}, 
-	{&sub},
-	{&and}, 
-	{&or}, 
-	{&xor}, 
-	{&mul}, 
-	{&sll}, 
-	{&sra}, 
-	{&srl}, 
-	{&add}, 
-	{&add}, 
-	{&add}, 
-	{&add}, 
-	{&add}, 
-	{&add}, 
-	{&add}, 
-	{&add}, 
-	{&add}, 
-	{&add}, 
-	{&add}, 
-	{&add}, 
-	{&add},
+/*Brench if Equal - if content of rs, rt registers is the same, jump the PC to rd's content (last 10 bits)*/
+void beq(unsigned int rd, unsigned int rs, unsigned int rt) {
+	if (registersArray[rs].value == registersArray[rt].value) {
+		jumpTenBits(rd);
+	}
 }
+
+/*Brench if Not Equal - if content of rs, rt registers is different, jump the PC to rd's content (last 10 bits)*/
+void bne(unsigned int rd, unsigned int rs, unsigned int rt) {
+	if (!(registersArray[rs].value == registersArray[rt].value)) {
+		jumpTenBits(rd);
+	}
+}
+
+/*Brench if Less Than - if content of rs is smaller than the content of rt, jump the PC to rd's content (last 10 bits)*/
+void blt(unsigned int rd, unsigned int rs, unsigned int rt) {
+	if (registersArray[rs].value < registersArray[rt].value) {
+		jumpTenBits(rd);
+	}
+}
+
+/*Brench if Greater Than - if content of rs is bigger than the content of rt, jump the PC to rd's content (last 10 bits)*/
+void bgt(unsigned int rd, unsigned int rs, unsigned int rt) {
+	if (registersArray[rs].value > registersArray[rt].value) {
+		jumpTenBits(rd);
+	}
+}
+
+/*Brench if Less than or Equal - if content of rs is smaller (or equal) than the content of rt, jump the PC to rd's content (last 10 bits)*/
+void ble(unsigned int rd, unsigned int rs, unsigned int rt) {
+	if (registersArray[rs].value <= registersArray[rt].value) {
+		jumpTenBits(rd);
+	}
+}
+
+/*Brench if Greater than or Equqal - if content of rs is bigger (or equal) than the content of rt, jump the PC to rd's content (last 10 bits)*/
+void bge(unsigned int rd, unsigned int rs, unsigned int rt) {
+	if (registersArray[rs].value >= registersArray[rt].value) {
+		jumpTenBits(rd);
+	}
+}
+
+/*Jump And Link - set the $ra register to the next PC (already there), and jump the PC to rd's content (last 10 bits)*/
+void jal(unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[15].value = PC;
+	jumpTenBits(rd);
+}
+
+/*Load Word = take sum of registers rs,rt contents, and use it as index in dmem array's data, put it in rd's content*/
+void lw(unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[rd].value = dmemArray[registersArray[rs].value + registersArray[rt].value];
+}
+
+/*Store Word = take sum of registers rs,rt contents, and use it as index in dmem array's data, put rd's content in this index*/
+void sw(unsigned int rd, unsigned int rs, unsigned int rt) {
+	dmemArray[registersArray[rs].value + registersArray[rt].value] = registersArray[rd].value;
+}
+
+/*Return to the instruction from interrupt - put in PC the content of IOregisters[7]*/
+void reti(unsigned int rd, unsigned int rs, unsigned int rt) {
+	PC = IORegisters[7].myValue;
+}
+
+/*Same as Load Word, but now from the IORegisters array, taking the register's content*/
+void in(unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[rd].value = IORegisters[registersArray[rs].value + registersArray[rt].value].myValue;
+}
+
+/*Same as Store Word, but now from the IORegisters array, taking the register's content*/
+void out(unsigned int rd, unsigned int rs, unsigned int rt) {
+	IORegisters[registersArray[rs].value + registersArray[rt].value].myValue = registersArray[rd].value;
+}
+
+/*Exits the program by adjusting PC to break from main run loop */
+void halt(unsigned int rd, unsigned int rs, unsigned int rt) {
+	PC = MAX_IMEM_SIZE + 1;
+}
+
+
+
+
+
+void(*instructionFuncArray[NUM_OF_OPCODES])(unsigned int, unsigned int, unsigned int) = {
+	{&add},
+	{&sub},
+	{&and},
+	{&or },
+	{&xor},
+	{&mul},
+	{&sll},
+	{&sra},
+	{&srl},
+	{&beq},
+	{&bne},
+	{&blt},
+	{&bgt},
+	{&ble},
+	{&bge},
+	{&jal},
+	{&lw},
+	{&sw},
+	{&reti},
+	{&in},
+	{&out},
+	{&halt}
+};
 //
 ////Input argument:
 ////Instruction *curr_ptr: pointer to the current instruction on the memory
