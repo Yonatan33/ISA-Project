@@ -9,12 +9,11 @@
 
 typedef struct RegisterStruct {
 	int value;
-	int number;
 	char name[6];
 } Register;
 
 typedef struct regIO {
-	int myRegNum;
+	unsigned int myRegNum;
 	int myNumOfBits;
 	unsigned int myValue;
 }registerIO;

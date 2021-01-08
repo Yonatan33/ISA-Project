@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "files.h";
+#include "fileHandlers.h";
 #include "general.h";
 #include "registers.h";
 
@@ -8,23 +8,35 @@
 void setBeforeStart(char *argv[]) {
 	PC = 0;
 	initFilePointers(argv);
-	initCommands();
+	initInstructionArray();
 	rewind(fimemin);
+	readDMemIn();
 }
 
-void executeInstruction() {
-
-
-
+void executeInstruction(Inst* currentInstruction) {
+	unsigned int rd = currentInstruction->rd;
+	unsigned int rs = currentInstruction->rs;
+	unsigned int rt = currentInstruction->rt;
+	currentInstruction->instructionFunc(rd, rs, rt);
 }
 
 void run() {
+	Inst* currentInstruction;
 	while (PC <= MAX_IMEM_SIZE) {
-		executeInstruction();
-
+		currentInstruction = &instructionArray[PC];
+		if (currentInstruction->isType2) {
+			registersArray[1].value = currentInstruction->immediate;
+			PC++;
+		}
+		PC++;
+		executeInstruction(currentInstruction);
+		
 	}
 }
 
+void setBeforeExit() {
+	closeFiles();
+}
 int main(int argc, char *argv[]) {
 	// we expect to get 13 files
 	if (argc != 14) {

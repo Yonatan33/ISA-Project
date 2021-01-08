@@ -5,22 +5,22 @@
 
 
 Register registersArray[NUM_OF_REGISTERS] = {
-	{0, 0, "$zero"},
-	{0, 1, "$imm"},
-	{0, 2, "$v0"},
-	{0, 3, "$a0"},
-	{0, 4, "$a1"},
-	{0, 5, "$t0"},
-	{0, 6, "$t1"},
-	{0, 7, "$t2"},
-	{0, 8, "$t3"},
-	{0, 9, "$s0"},
-	{0, 10, "$s1"},
-	{0, 11, "$s2"},
-	{0, 12, "$gp"},
-	{0, 13, "$fp"},
-	{0, 14, "$rp"},
-	{0, 15, "$ra"}
+	{0, "$zero"},	/*registersArray[0]*/
+	{0, "$imm"},	/*registersArray[1]*/
+	{0, "$v0"},		/*registersArray[2]*/
+	{0, "$a0"},		/*registersArray[3]*/
+	{0, "$a1"},		/*registersArray[4]*/
+	{0, "$t0"},		/*registersArray[5]*/
+	{0, "$t1"},		/*registersArray[6]*/		
+	{0, "$t2"},		/*registersArray[7]*/
+	{0, "$t3"},		/*registersArray[8]*/
+	{0, "$s0"},		/*registersArray[9]*/
+	{0, "$s1"},		/*registersArray[10]*/
+	{0, "$s2"},		/*registersArray[11]*/
+	{0, "$gp"},		/*registersArray[12]*/
+	{0, "$fp"},		/*registersArray[13]*/
+	{0, "$rp"},		/*registersArray[14]*/
+	{0, "$ra"}		/*registersArray[15]*/
 };
 
 
