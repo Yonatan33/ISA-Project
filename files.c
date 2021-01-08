@@ -13,11 +13,12 @@ FILE* get_file_pointer(const char file_name, char mode) {
 	FILE* tmp_ptr = NULL;
 	tmp_ptr = fopen(file_name, mode);
 	if (tmp_ptr == NULL) {
-		printf("problem with %d", f_num); // print error to indicate which file has the problem
+		printf("Error opening file %d, named: %s", f_num, file_name); // print error to indicate which file has the problem
 		exit(1);
 	}
 	f_num++;
 	return tmp_ptr;
+
 }
 
 // initialize all file ptrs:

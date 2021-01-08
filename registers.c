@@ -4,7 +4,7 @@
 #include "registers.h"
 
 
-Register registersArray[NUMBER_OF_REGISTERS] = {
+Register registersArray[NUM_OF_REGISTERS] = {
 	{0, 0, "$zero"},
 	{0, 1, "$imm"},
 	{0, 2, "$v0"},
@@ -22,6 +22,8 @@ Register registersArray[NUMBER_OF_REGISTERS] = {
 	{0, 14, "$rp"},
 	{0, 15, "$ra"}
 };
+
+
 
 
 

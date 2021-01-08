@@ -5,110 +5,134 @@
 #include "files.h"
 #include "registers.h"
 
-// takes a line out of the input file
+// Read all lines from the input file
 // break the string into hexa numbers, then store them in structure's fields
-Inst* initInstruction() {
-	Inst newInstruction;
+// Put each instruction in it's PC place in the instructions array.
+void initInstructionArray() {
+	int localPC = 0;
+	unsigned int temp;
 	char currentInstructionLine[LINE_LEN]; //here we will get the line from file as string
-
-	if (fgets(currentInstructionLine, LINE_LEN, fimemin) != NULL) {
-
-		unsigned int temp = (int)strtol(currentInstructionLine, NULL, 16);
-		newInstruction.opcode = 0xFF000 & temp;
-		newInstruction.rd = 0x00F00 & temp;
-		newInstruction.rs = 0x000F0 & temp;
-		newInstruction.rd = 0x0000F & temp;
-
+	char currentInstructionImm[LINE_LEN - 1];
+	while (fgets(currentInstructionLine, LINE_LEN, fimemin) != NULL) {
+		temp = (unsigned int)strtol(currentInstructionLine, NULL, 16);
+		instructionArray[localPC].opcode = 0xFF & (temp >> 12);
+		instructionArray[localPC].rd = 0xF & (temp >> 8);
+		instructionArray[localPC].rs = 0xF & (temp >> 4);
+		instructionArray[localPC].rd = 0xF & temp;
 		// checks if any of the registers uses reg number 1,
 		// then we need to use the immediate
-		if (newInstruction.rd == 1 ||
-			newInstruction.rs == 1 ||
-			newInstruction.rt == 1) {
-			newInstruction.isType2 = 1;
-
-			//take the immediate value in the struct
-			char currentInstructionImm[LINE_LEN - 1];
-			fgets(currentInstructionImm, LINE_LEN - 1, fimemin);
-			newInstruction.immediate = (int)strtol(currentInstructionImm, NULL, 16);
-
+		if (instructionArray[localPC].rd == 1 || instructionArray[localPC].rs == 1 || instructionArray[localPC].rt == 1) {
+			instructionArray[localPC].isType2 = 1;
+			localPC++;
+			if (fgets(currentInstructionImm, LINE_LEN - 1, fimemin)) {
+				instructionArray[localPC].immediate = (unsigned int)strtol(currentInstructionImm, NULL, 16);
+			}
 		}
+		localPC++;
 	}
 
-	return &newInstruction;
+	
 }
+
+
 
 
 
 //Instruction *currInstruction: pointer to the current instruction on the memory
 //Functionality: function adds the arguments in register rs and rt, saves it to rd
-void add(Inst* currentInstruction) {
-	registersArray[currentInstruction->rd].value =
-		registersArray[currentInstruction->rs].value + registersArray[currentInstruction->rt].value;
+void add(unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[rd].value =
+		registersArray[rs].value + registersArray[rt].value;
 }
 
 //Instruction *currInstruction: pointer to the current instruction
 //Functionality: function subtracts the arguments in register rt from rs, saves it to rd
-void sub(Inst* currentInstruction) {
-	registersArray[currentInstruction->rd].value =
-		registersArray[currentInstruction->rs].value - registersArray[currentInstruction->rt].value;
+void sub(unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[rd].value =
+		registersArray[rs].value - registersArray[rt].value;
 }
 
 
 //Instruction *currInstruction: pointer to the current instruction
 //Functionality: rs bitwise-and with rt, store in rd
-void and(Inst* currentInstruction) {
-	registersArray[currentInstruction->rd].value =
-		registersArray[currentInstruction->rs].value & registersArray[currentInstruction->rt].value;
+void and(unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[rd].value =
+		registersArray[rs].value & registersArray[rt].value;
 }
 
 
 //Instruction *currInstruction: pointer to the current instruction
 //Functionality: rs bitwise-or with rt, store in rd
-void or (Inst* currentInstruction) {
-	registersArray[currentInstruction->rd].value =
-		registersArray[currentInstruction->rs].value | registersArray[currentInstruction->rt].value;
+void or (unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[rd].value =
+		registersArray[rs].value | registersArray[rt].value;
 }
 
 
 //Instruction *currInstruction: pointer to the current instruction
 //Functionality: rs bitwise-xor with rt, store in rd
-void xor (Inst* currentInstruction) {
-	registersArray[currentInstruction->rd].value =
-		registersArray[currentInstruction->rs].value ^ registersArray[currentInstruction->rt].value;
+void xor (unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[rd].value =
+		registersArray[rs].value ^ registersArray[rt].value;
 }
 
 
 //Instruction *currInstruction: pointer to the current instruction
 //Functionality: rs multiplied with rt, store in rd
-void mul(Inst* currentInstruction) {
-	registersArray[currentInstruction->rd].value =
-		registersArray[currentInstruction->rs].value * registersArray[currentInstruction->rt].value;
+void mul(unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[rd].value =
+		registersArray[rs].value * registersArray[rt].value;
 }
 
 
 //Instruction *currInstruction: pointer to the current instruction
 //Functionality: rs is logical left shifted by rt, stored in rd
-void sll(Inst* currentInstruction) {
-	registersArray[currentInstruction->rd].value =
-		registersArray[currentInstruction->rs].value << registersArray[currentInstruction->rt].value;
+void sll(unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[rd].value =
+		registersArray[rs].value << registersArray[rt].value;
 }
 
 
 //Instruction *currInstruction: pointer to the current instruction
 //Functionality: rs is arithmetical right shifted by rt, stored in rd
-void sra(Inst* currentInstruction) {
-	registersArray[currentInstruction->rd].value =
-		registersArray[currentInstruction->rs].value >> registersArray[currentInstruction->rt].value;
+void sra(unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[rd].value =
+		registersArray[rs].value >> registersArray[rt].value;
 }
 
 // not sure it's OK - how to make a shift logical or arithmetical
 //Instruction *currInstruction: pointer to the current instruction
 //Functionality: rs is logical right shifted by rt, stored in rd
-void srl(Inst* currentInstruction) {
-	registersArray[currentInstruction->rd].value =
-		(unsigned)registersArray[currentInstruction->rs].value >> registersArray[currentInstruction->rt].value;
+void srl(unsigned int rd, unsigned int rs, unsigned int rt) {
+	registersArray[rd].value =
+		(unsigned)registersArray[rs].value >> registersArray[rt].value;
 }
 
+
+instructionFuncArray = {
+	{&add}, 
+	{&sub},
+	{&and}, 
+	{&or}, 
+	{&xor}, 
+	{&mul}, 
+	{&sll}, 
+	{&sra}, 
+	{&srl}, 
+	{&add}, 
+	{&add}, 
+	{&add}, 
+	{&add}, 
+	{&add}, 
+	{&add}, 
+	{&add}, 
+	{&add}, 
+	{&add}, 
+	{&add}, 
+	{&add}, 
+	{&add}, 
+	{&add},
+}
 //
 ////Input argument:
 ////Instruction *curr_ptr: pointer to the current instruction on the memory
