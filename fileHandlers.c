@@ -3,13 +3,11 @@
 #include "fileHandlers.h"
 
 
-
-
 // open a file and check that its not null
 // if it's NULL print an error and exit the simulator otherwise return the file's address
 // input: file name, mode = "r" or "w"
 // output: file address
-FILE* get_file_pointer(const char file_name, char mode) {
+FILE* get_file_pointer(const char* file_name, char* mode) {
 	FILE* tmp_ptr = NULL;
 	tmp_ptr = fopen(file_name, mode);
 	if (tmp_ptr == NULL) {
@@ -22,7 +20,7 @@ FILE* get_file_pointer(const char file_name, char mode) {
 }
 
 // initialize all file ptrs:
-void initFilePointers(char** argv) {
+void initFilePointers(char* argv[]) {
 	fimemin = get_file_pointer(argv[f_num], "r");
 	fdmemin = get_file_pointer(argv[f_num], "r");
 	fdiskin = get_file_pointer(argv[f_num], "r");
@@ -38,14 +36,66 @@ void initFilePointers(char** argv) {
 	fdiskout = get_file_pointer(argv[f_num], "w");
 }
 
-void readDMemIn() {
+void readDMemIn(){
 	char dmemLine[DMEM_LINE_SIZE + 2];	/*  add 1 for '\n' and 1 for '\0'  */
 	int index = 0;
 	while (fgets(dmemLine, DMEM_LINE_SIZE + 2, fdmemin) != NULL) {
-		dmemArray[index] = strtol(dmemLine, NULL, 16);
+		dmemArray[index] = (int)strtoul(dmemLine, NULL, 16);
 		index++;
 	}
+}
 
+/*Go over irq2in.txt file twice -
+  Once to take it's size and dynamically allocate the memory
+  Twice to insert it's values to irq2values
+*/
+void readIrq2In() {
+	char irq2Line[MAX_LINE_SIZE];
+	int linesInFile = 0;
+	while (fgets(irq2Line, MAX_LINE_SIZE, firq2in) != NULL) {
+		linesInFile++;
+	}
+	irq2values = (int*) calloc(linesInFile, sizeof(int));
+	rewind(firq2in);
+	linesInFile = 0;
+	while (fgets(irq2Line, MAX_LINE_SIZE, firq2in) != NULL) {
+		irq2values[linesInFile] = (unsigned int)strtol(irq2Line, NULL, 10);
+		linesInFile++;
+	}
+}
+
+void readDiskIn() {
+	
+}
+
+unsigned int buildInstructionCode(unsigned int opcode) {
+	unsigned int code, rd, rs, rt;
+	rd = instructionArray[PC].rd;
+	rs = instructionArray[PC].rs;
+	rt = instructionArray[PC].rt;
+	code = (opcode << 12) | (rd << 8) | (rs << 4) | rt;
+	return code;
+}
+
+/*write one line of trace to trace file according to assignment instructions*/
+void writeTraceOutput(unsigned int opcode) {
+	int i;
+	
+	fprintf(ftrace, "%03X %05X", PC, buildInstructionCode(opcode));
+	for (i = 0; i < NUM_OF_REGISTERS; i++) {
+		if (i != 1) {
+			fprintf(ftrace, " %08X", registersArray[i].value);
+		}
+		else {
+			if ((instructionArray[PC].immediate >> 19)) {	/*check if $imm content is negative, and make sign extension accordingly*/
+				fprintf(ftrace, " %08X", (instructionArray[PC].immediate & 0xFFFFFFFF));
+			}
+			else {
+				fprintf(ftrace, " %08X", instructionArray[PC].immediate);
+			}
+		}
+	}
+	fprintf(ftrace, "\n");
 }
 
 void closeFiles() {
