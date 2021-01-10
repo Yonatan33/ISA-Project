@@ -1,12 +1,19 @@
 #ifndef FILE_HANDLERS
 #define FILE_HANDLERS
 
+
+/* Header designed to handle operations done on files
+ * 
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
+#include "GlobalUse.h"
+
 
 #define NUMBER_OF_FILES 13
 #define DMEM_LINE_SIZE 8
-#define MAX_DMEM_SIZE 4096
+
 // variables declerations:
 FILE* fimemin; // instructions memory
 FILE* fdmemin; // data memory
@@ -22,11 +29,15 @@ FILE* fmonitor;
 FILE* fmonitor2;
 FILE* fdiskout;
 
-static int f_num = 0;
-static int dmemArray[MAX_DMEM_SIZE] = { 0 };
-void initFilePointers(char** argv);
+
+static int f_num = 1;
+
+void initFilePointers(char* argv[]);
 void readDMemIn();
+void readIrq2In();
+void readDiskIn();
+void writeTraceOutput(unsigned int opcode);
 void closeFiles();
-FILE* get_file_pointer(const char file_name, char mode);
+
 
 #endif
