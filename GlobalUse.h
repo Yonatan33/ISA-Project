@@ -15,6 +15,8 @@
 #define DISK_CYCLE_SIZE 1024
 #define NUM_OF_DISK_SECTORS 128
 #define DISK_SECTOR_SIZE 128
+#define MONITOR_SIZE_X 352
+#define MONITOR_SIZE_Y 288
 
 /*********************************  IORegisters names as numbers  *********************************/
 
@@ -48,6 +50,8 @@ int clockCycle, diskCycle;		/*Cycle counters fot the clock, the disk and the tim
 int insideInterrupt;						/*Flag to indicate if we are handling an interruption*/
 int jumpFlag;								/*Flag to indicate if the instruction executed performed a jump*/
 int diskON;
+int instructionsCount;
+
 
 
 /*********************************  Structs  *********************************/
@@ -72,7 +76,9 @@ typedef struct regIO {
 	int myRegNum;
 	int myNumOfBits;
 	unsigned int myValue;
+	char* myName;
 }registerIO;
+
 
 
 /*********************************  Data Structures  *********************************/
@@ -85,11 +91,18 @@ registerIO IORegisters[NUM_OF_IOREGISTERS];				/*array for IO registers*/
 Inst instructionArray[MAX_IMEM_SIZE];					/*An array to hold all instructions read from imem file. instruction's PC is its array index.
 														 Memory pre-allocated, no need for dynamic*/
 
+
 int dmemArray[MAX_DMEM_SIZE];							/*Array for holding the data memory (stack)*/
 
 int diskArray[NUM_OF_DISK_SECTORS][DISK_SECTOR_SIZE];	/*Array for holding the disk content*/
 
 int* irq2values;										/*Array for holding interruption times recieved from irq2in.txt*/
+
+int monitorArray[MONITOR_SIZE_X][MONITOR_SIZE_Y];		/*Array for holding pixel values*/
+
+
+
+
 
 
 
