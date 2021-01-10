@@ -37,6 +37,13 @@ void readDMemIn();
 void readIrq2In();
 void readDiskIn();
 void writeTraceOutput(unsigned int opcode);
+void writeHWRegTraceOut(Inst* currentInstruction);
+void writeDMemOut();
+void writeRegOut();
+void writeMonitorOut();
+void writeMonitorYUVOut();
+void writeDiskOut();
+void writeCycles();
 void closeFiles();
 
 

@@ -39,7 +39,20 @@ void initInstructionArray(FILE* imemInFile) {
 	}	
 }
 
-
+/*write to leds.txt file if leds register value has changed*/
+void writeLedsOut(unsigned int rd, unsigned int rs, unsigned int rt) {
+	int cycle, newRegValue;
+	if ((rd == 1) || (rs == 1) || (rt == 1)) {
+		cycle = clockCycle - 2;
+	}
+	else {
+		cycle = clockCycle - 1;
+	}
+	if (IORegisters[registersArray[rs].value + registersArray[rt].value].myValue != registersArray[rd].value) {
+		newRegValue = registersArray[rd].value;
+		fprintf(fleds, "%d %08X\n", cycle, newRegValue);
+	}
+}
 
 void jumpTenBits(unsigned int rd) {
 	PC = registersArray[rd].value & 0x3FF;
@@ -183,20 +196,33 @@ void reti(unsigned int rd, unsigned int rs, unsigned int rt) {
 /*Same as Load Word, but now from the IORegisters array, taking the register's content*/
 void in(unsigned int rd, unsigned int rs, unsigned int rt) {
 	registersArray[rd].value = IORegisters[registersArray[rs].value + registersArray[rt].value].myValue;
+	if (registersArray[rs].value + registersArray[rt].value == MONITORCMD) {
+		registersArray[rd].value = 0;
+	}
 }
 
-/*Same as Store Word, but now from the IORegisters array, taking the register's content*/
+/*Same as Store Word, but now from the IORegisters array, taking the register's content
+ *Special care for diskcmd writing if neccessary. 
+*/
 void out(unsigned int rd, unsigned int rs, unsigned int rt) {
+	if (registersArray[rs].value + registersArray[rt].value == LEDS) {
+		writeLedsOut(rd, rs, rt);
+	}
 	IORegisters[registersArray[rs].value + registersArray[rt].value].myValue = registersArray[rd].value;
+	if (registersArray[rs].value + registersArray[rt].value == DISKCMD && IORegisters[DISKSTATUS].myValue == 0) {
+		IORegisters[DISKSTATUS].myValue = 1;
+		diskRW();
+		diskON = 1;
+	}
+	else if (registersArray[rs].value + registersArray[rt].value == MONITORCMD && registersArray[rd].value == 1) {
+		updatePixel();
+	}
 }
 
 /*Exits the program by adjusting PC to break from main run loop */
 void halt(unsigned int rd, unsigned int rs, unsigned int rt) {
 	PC = MAX_IMEM_SIZE + 1;
 }
-
-
-
 
 
 void(*instructionFuncArray[NUM_OF_OPCODES])(unsigned int, unsigned int, unsigned int) = {
@@ -224,49 +250,6 @@ void(*instructionFuncArray[NUM_OF_OPCODES])(unsigned int, unsigned int, unsigned
 	{&halt}
 };
 
-Register registersArray[NUM_OF_REGISTERS] = {
-	{0, "$zero"},	/*registersArray[0]*/
-	{0, "$imm"},	/*registersArray[1]*/
-	{0, "$v0"},		/*registersArray[2]*/
-	{0, "$a0"},		/*registersArray[3]*/
-	{0, "$a1"},		/*registersArray[4]*/
-	{0, "$t0"},		/*registersArray[5]*/
-	{0, "$t1"},		/*registersArray[6]*/
-	{0, "$t2"},		/*registersArray[7]*/
-	{0, "$t3"},		/*registersArray[8]*/
-	{0, "$s0"},		/*registersArray[9]*/
-	{0, "$s1"},		/*registersArray[10]*/
-	{0, "$s2"},		/*registersArray[11]*/
-	{0, "$gp"},		/*registersArray[12]*/
-	{0, "$fp"},		/*registersArray[13]*/
-	{0, "$rp"},		/*registersArray[14]*/
-	{0, "$ra"}		/*registersArray[15]*/
-};
-
-registerIO IORegisters[NUM_OF_IOREGISTERS] = {
-	{ 0, 1, START_VALUE},		/*IORegisters[0] - irq0enable*/
-	{ 1, 1, START_VALUE},		/*IORegisters[1] - irq1enable*/
-	{ 2, 1, START_VALUE},		/*IORegisters[2] - irq2enable*/
-	{ 3, 1, START_VALUE},		/*IORegisters[3] - irq0status*/
-	{ 4, 1, START_VALUE},		/*IORegisters[4] - irq1status*/
-	{ 5, 1, START_VALUE},		/*IORegisters[5] - irq2status*/
-	{ 6, 12, START_VALUE},		/*IORegisters[6] - irqhandler*/
-	{ 7, 12, START_VALUE},		/*IORegisters[7] - irqreturn*/
-	{ 8, 32, START_VALUE},		/*IORegisters[8] - clks*/
-	{ 9, 32, START_VALUE},		/*IORegisters[9] - leds*/
-	{ 10, 32, START_VALUE},		/*IORegisters[10] - reserved*/
-	{ 11, 1, START_VALUE},		/*IORegisters[11] - timerenable*/
-	{ 12, 32, START_VALUE},		/*IORegisters[12] - timercurrent*/
-	{ 13, 32, START_VALUE},		/*IORegisters[13] - timermax*/
-	{ 14, 2, START_VALUE},		/*IORegisters[14] - diskcmd*/
-	{ 15, 7, START_VALUE},		/*IORegisters[15] - disksector*/
-	{ 16, 12, START_VALUE},		/*IORegisters[16] - diskbuffer*/
-	{ 17, 1, START_VALUE},		/*IORegisters[17] - diskstatus*/
-	{ 18, 1, START_VALUE},		/*IORegisters[18] - monitorcmd*/
-	{ 19, 11, START_VALUE},		/*IORegisters[19] - monitorx*/
-	{ 20, 10, START_VALUE},		/*IORegisters[20] - disksector*/
-	{ 21, 8, START_VALUE}		/*IORegisters[21] - monitordata*/
-};
 
 
 /*Check if clock interruption was triggered*/
@@ -282,11 +265,13 @@ int checkForIrq0() {
 	return 0;
 }
 
+/*Check if disk interruption was triggered*/
 int checkForIrq1() {
 	if (diskCycle >= DISK_CYCLE_SIZE) {
 		IORegisters[DISKCMD].myValue = 0;
 		IORegisters[DISKSTATUS].myValue = 0;
 		diskCycle = 0;
+		diskON = 0;
 		return 1;
 	}
 	return 0;
@@ -321,6 +306,7 @@ void checkInterrupts(Inst* prevInstruction) {
 	if (irq0Flag) {
 		IORegisters[IRQ_0_STATUS].myValue = 1;
 	}
+	irq1Flag = checkForIrq1();
 	if (irq1Flag) {
 		IORegisters[IRQ_1_STATUS].myValue = 1;
 	}

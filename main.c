@@ -13,12 +13,14 @@ void setBeforeStart(char *argv[]) {
 	insideInterrupt = 0;
 	jumpFlag = 0;
 	diskON = 0;
+	instructionsCount = 0;
 	initFilePointers(argv);
 	initInstructionArray(fimemin);
 	rewind(fimemin);
 	readDMemIn();
 	readIrq2In();
-	//readDiskIn();
+	readDiskIn();
+
 }
 
 void executeInstruction(Inst* currentInstruction) {
@@ -47,25 +49,35 @@ void run() {
 		promoteTimer();
 		promoteDiskCycle();
 		executeInstruction(currentInstruction);
+		writeHWRegTraceOut(currentInstruction);
 		/*Function is executed, PC is promoted, now need to check for interrupts and change PC accordingly*/
 		checkInterrupts(currentInstruction);
 		jumpFlag = 0;
+		instructionsCount++;
 
 	}
 }
 
 void setBeforeExit() {
+	writeDMemOut();
+	writeRegOut();
+	writeMonitorOut();
+	writeMonitorYUVOut();
+	writeDiskOut();
+	writeCycles();
 	closeFiles();
 }
 int main(int argc, char *argv[]) {
+	int* pointerToFree;
 	// we expect to get 13 files
 	if (argc != 14) {
 		printf("Not enough input files. Exit program.\n");
 		exit(1);
 	}
 	setBeforeStart(argv);
+	pointerToFree = irq2values;
 	run();
-	setBeforeExit();
+	setBeforeExit(pointerToFree);
 
 	return 0;
 }

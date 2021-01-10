@@ -48,6 +48,7 @@ void readDMemIn(){
 /*Go over irq2in.txt file twice -
   Once to take it's size and dynamically allocate the memory
   Twice to insert it's values to irq2values
+  Insert data to irq2values array
 */
 void readIrq2In() {
 	char irq2Line[MAX_LINE_SIZE];
@@ -64,8 +65,17 @@ void readIrq2In() {
 	}
 }
 
+/*Read the data from the diskin.txt file and put it in diskArray*/
 void readDiskIn() {
-	
+	char diskLine[MAX_LINE_SIZE];
+	int currentLine = 0;
+	int sector, offset;
+	while (fgets(diskLine, MAX_LINE_SIZE, fdiskin) != NULL) {
+		sector = currentLine / NUM_OF_DISK_SECTORS;
+		offset = currentLine % DISK_SECTOR_SIZE;
+		diskArray[sector][offset] = (int)strtoul(diskLine, NULL, 16);
+		currentLine++;
+	}
 }
 
 unsigned int buildInstructionCode(unsigned int opcode) {
@@ -96,6 +106,87 @@ void writeTraceOutput(unsigned int opcode) {
 		}
 	}
 	fprintf(ftrace, "\n");
+}
+
+void writeHWRegTraceOut(Inst* currentInstruction) {
+	int isImm = 0, cycle, data, rd, rs, rt, ioregsIndex;
+	char* name, * mode;
+	rd = currentInstruction->rd;
+	rs = currentInstruction->rs;
+	rt = currentInstruction->rt;
+
+	if (currentInstruction->opcode == 19) {
+		mode = "READ";
+	}
+	else if (currentInstruction->opcode == 20) {
+		mode = "WRITE";
+	}
+	else {
+		return;
+	}
+
+	isImm = currentInstruction->isType2;
+	if (isImm) {
+		cycle = clockCycle - 1;
+	}
+	else {
+		cycle = clockCycle;
+	}
+	ioregsIndex = registersArray[rs].value + registersArray[rt].value;
+	name = IORegisters[ioregsIndex].myName;
+	data = IORegisters[ioregsIndex].myValue;
+	if (ioregsIndex == MONITORCMD) {
+		data = 0;
+	}
+	
+	fprintf(fhwregtrace, "%d %s %s %08X\n", cycle, mode, name, data);
+
+}
+
+void writeDMemOut() {
+	int i;
+	for (i = 0; i < MAX_DMEM_SIZE; i++) {
+		fprintf(fdmemout, "%08X\n", dmemArray[i]);
+	}
+}
+
+void writeRegOut() {
+	int i;
+	for (i = 2; i < NUM_OF_REGISTERS; i++) {
+		fprintf(fregout, "%08X\n", registersArray[i].value);
+	}
+}
+
+void writeMonitorOut() {
+	int x, y;
+	for (y = 0; y < MONITOR_SIZE_Y; y++) {
+		for(x = 0; x < MONITOR_SIZE_X; x++) {
+			fprintf(fmonitor, "%02X\n", monitorArray[x][y]);
+		}
+	}
+}
+
+void writeMonitorYUVOut() {
+	int x, y;
+	for (y = 0; y < MONITOR_SIZE_Y; y++) {
+		for (x = 0; x < MONITOR_SIZE_X; x++) {
+			fwrite((unsigned char*)&monitorArray[x][y], sizeof(char), 1, fmonitor2);
+		}
+	}
+}
+
+void writeDiskOut() {
+	int sector, sectorOffset;
+	for (sector = 0; sector < NUM_OF_DISK_SECTORS; sector++) {
+		for (sectorOffset = 0; sectorOffset < DISK_SECTOR_SIZE; sectorOffset++) {
+			fprintf(fdiskout, "%08X\n", diskArray[sector][sectorOffset]);
+		}
+	}
+}
+
+void writeCycles() {
+	fprintf(fcycles, "%d\n", clockCycle);
+	fprintf(fcycles, "%d\n", instructionsCount);
 }
 
 void closeFiles() {
