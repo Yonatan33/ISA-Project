@@ -1,8 +1,4 @@
 ﻿  asm.c
-c:\users\yonig\source\repos\assembler\assembler\asm.c(226): warning C4477: 'sscanf' : format string '%d' requires an argument of type 'int *', but variadic argument 2 has type 'int'
-c:\users\yonig\source\repos\assembler\assembler\asm.c(226): warning C4477: 'sscanf' : format string '%x' requires an argument of type 'unsigned int *', but variadic argument 3 has type 'int'
-c:\users\yonig\source\repos\assembler\assembler\asm.c(233): warning C4477: 'sscanf' : format string '%x' requires an argument of type 'unsigned int *', but variadic argument 2 has type 'int'
-c:\users\yonig\source\repos\assembler\assembler\asm.c(233): warning C4477: 'sscanf' : format string '%d' requires an argument of type 'int *', but variadic argument 3 has type 'int'
-c:\users\yonig\source\repos\assembler\assembler\asm.c(240): warning C4477: 'sscanf' : format string '%x' requires an argument of type 'unsigned int *', but variadic argument 2 has type 'int'
-c:\users\yonig\source\repos\assembler\assembler\asm.c(240): warning C4477: 'sscanf' : format string '%x' requires an argument of type 'unsigned int *', but variadic argument 3 has type 'int'
+c:\users\yonig\source\repos\assembler\assembler\asm.c(70): warning C4129: ' ': unrecognized character escape sequence
+c:\users\yonig\source\repos\assembler\assembler\asm.c(70): warning C4129: ',': unrecognized character escape sequence
   Assembler.vcxproj -> C:\Users\yonig\source\repos\Assembler\Debug\asm.exe

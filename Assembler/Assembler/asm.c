@@ -6,20 +6,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*****************************  constats  *****************************/
+/*****************************  constants  *****************************/
 
-#define MEM_SIZE_BITS	(16)
-#define MEM_SIZE	1024
-#define MEM_MASK	(MEM_SIZE - 1)
+#define MEM_SIZE_BITS (16)
+#define MEM_SIZE 1024
 #define REGISTERS_NUM 16
-
 #define MAX_LINE 500
 #define MAX_MEM 4096
 #define MAX_LABEL_SIZE 50
 #define NUM_OF_OPCODES 22
 
 /*****************************  variables and data structures  *****************************/
-unsigned int mem[MEM_SIZE];
+//unsigned int mem[MEM_SIZE];
 static int PC = 0, labelsCount = 0, numOfCommands = 0;
 static char* registers[16] = { "$zero", "$imm", "$v0", "$a0", "$a1", "$t0", "$t1", "$t2", "$t3", "$s0", "$s1", "$s2", "$gp", "$sp", "$fp", "$ra" };
 static char* opcodes[22] = { "add", "sub", "and",  "or",  "xor",  "mul",  "sll",  "sra",  "srl",  "beq",  "bne",  "blt",  "bgt",  "ble",  "bge",
@@ -31,6 +29,22 @@ static int imem[MEM_SIZE];
 
 /*****************************  Functions supporting both walkthroughs on the assembly program  *****************************/
 
+/*return 1 if line has no label/command in it
+* return 0 otherwise
+*/
+int checkLineForLackOfContent(char* line) {
+	char * firstWord, copyLine[MAX_LINE];
+	char* delimiter = ", \n\t";
+	strcpy(copyLine, line);
+	firstWord = strtok(copyLine, delimiter);
+	if (firstWord == NULL) {
+		return 1;
+	}
+	else if (firstWord[0] == '#') {
+		return 1;
+	}
+	return 0;
+}
 /*Reading next line in the input file, ignoring comments and empty lines
 * return pointer to line, or NULL if EOF
 */
@@ -39,7 +53,7 @@ char* readNextLine(char* line, int max_size, FILE* inputFile) {
 	if (!(flag = fgets(line, MAX_LINE, inputFile))) {
 		return NULL;
 	}
-	while (line[0] == '\n' || line[0] == '#') {
+	while (checkLineForLackOfContent(line) && flag != NULL) {
 		flag = fgets(line, MAX_LINE, inputFile);
 	}
 	if (flag == NULL) {
@@ -53,10 +67,22 @@ char* readNextLine(char* line, int max_size, FILE* inputFile) {
  */
 int isLabel(char* line) {
 	char * firstWord, copyLine[MAX_LINE];
-	char* delimiter = " ";
+	char* delimiter = " \ \,";
 	strcpy(copyLine, line);
 	firstWord = strtok(copyLine, delimiter);
 	if (strstr(firstWord, ":")) {
+		return 1;
+	}
+	return 0;
+}
+
+/*Check if given line has the ".word" pseudo command*/
+int isWord(char* line) {
+	char * firstWord, copyLine[MAX_LINE];
+	char* delimiter = " ";
+	strcpy(copyLine, line);
+	firstWord = strtok(copyLine, delimiter);
+	if (strstr(firstWord, ".word")) {
 		return 1;
 	}
 	return 0;
@@ -118,6 +144,7 @@ void setPC(char* line) {
 	else {
 		PC++;
 	}
+	printf("PC number: %d is set for line: %s\n", PC, line);
 }
 
 /*Insert given label to data structure of labels.
@@ -138,7 +165,7 @@ void dealWithComma(char* name) {
 /*****************************  Implementation of first assembly program walkthrough  *****************************/
 
 /*
- * Go over all of the assembly code for the first time, checking for labels.
+ * Go over all of the assembly code for the first time, checking for labels and putting them in the label data structure.
  * */
 void prepareLabels(FILE* inputFile) {
 	int i;
@@ -147,6 +174,9 @@ void prepareLabels(FILE* inputFile) {
 	for (i = 0; i < MEM_SIZE; i++) {					/*Go over MEM_SIZE lines at most*/
 		if (readNextLine(line, MAX_LINE, inputFile) == NULL) {
 			break;
+		}
+		else if (isWord(line)) {
+			continue;
 		}
 		else if (isLabel(line)) {
 			labelName = getLabelName(line);
@@ -204,47 +234,32 @@ int isCommand(char* line) {
 }
 
 
-/******************************************************************************************
-functions in here need to be implemented
-*/
-
 /*Update the dmem array of words*/
 void writeDMem(char* line) {
 	int scanCheck;
-	int address, data;
+	char *address, *data, addressHolder[MAX_LABEL_SIZE], dataHolder[MAX_LABEL_SIZE];
+	int addressNum, dataNum;
 	char command[MAX_LINE];
+	/*translate hex strings if needed*/
 
-	/*try all possible binary/hex combinations (4), guranteed only one will pass*/
-
-	scanCheck = sscanf(line, "%s %d %d", command, &address, &data);
+	scanCheck = sscanf(line, "%s %s %s", command, addressHolder, dataHolder);
 	if (scanCheck != -1) {
-		if (address >= 0 && address < MAX_MEM) {
-			dmem[address] = data;
+		if (strstr(addressHolder, "0x") || strstr(addressHolder, "0X")) {
+			address = &(addressHolder[2]);
+			addressNum = strtoul(address, NULL, 16);
 		}
-		return;
-	}
-	scanCheck = sscanf(line, "%s %d %x", command, address, data);
-	if (scanCheck != -1) {
-		if (address >= 0 && address < MAX_MEM) {
-			dmem[address] = data;
+		else {
+			addressNum = atoi(addressHolder);
 		}
-		return;
-	}
-	scanCheck = sscanf(line, "%s %x %d", command, address, data);
-	if (scanCheck != -1) {
-		if (address >= 0 && address < MAX_MEM) {
-			dmem[address] = data;
+		if (strstr(dataHolder, "0x") || strstr(dataHolder, "0X")) {
+			data = &(dataHolder[2]);
+			dataNum = strtoul(data, NULL, 16);;
 		}
-		return;
-	}
-	scanCheck = sscanf(line, "%s %x %x", command, address, data);
-	if (scanCheck != -1) {
-		if (address >= 0 && address < MAX_MEM) {
-			dmem[address] = data;
+		else {
+			dataNum = atoi(dataHolder);
 		}
-		return;
+		dmem[addressNum] = dataNum;
 	}
-
 }
 
 /*return 1 if the line argument contains "$imm" as one of the 3 registers, and 0 otherwise*/
@@ -289,17 +304,7 @@ int getRegisterNumber(char* r) {
 	return 17; //should NOT get here
 }
 
-/*Check if given line has the ".word" pseudo command*/
-int isWord(char* line) {
-	char * firstWord, copyLine[MAX_LINE];
-	char* delimiter = " ";
-	strcpy(copyLine, line);
-	firstWord = strtok(copyLine, delimiter);
-	if (strstr(firstWord, ".word")) {
-		return 1;
-	}
-	return 0;
-}
+
 
 /*Given a string of immediate, check if its a known label
   If it's a label, return it's corresponding PC,
@@ -307,6 +312,8 @@ int isWord(char* line) {
 */
 int interpreteimmediate(char* imm) {
 	int i;
+	char * hexImm;
+	
 	for (i = 0; i < MEM_SIZE; i++) {
 		if (labelsDS[i] == NULL) { /*end of labelsDS, no matching label was found*/
 			break;
@@ -315,7 +322,14 @@ int interpreteimmediate(char* imm) {
 			return atoi(labelsDS[i][1]);
 		}
 	}
-	return atoi(imm);	/*immediate is not a label, therfore must be a number*/
+	
+	if (strstr(imm, "0x") || strstr(imm, "0X")) {
+		hexImm = &(imm[2]);
+		return strtoul(hexImm, NULL, 16);
+	}
+	
+	
+	return atoi(imm);	/*immediate is not a label, nor a hex-ased number therfore must be a decimal number*/
 }
 
 /*Extract opcode from text command*/
@@ -323,6 +337,11 @@ int getOpcodeNumber(char* command) {
 	int i;
 	for (i = 0; i < NUM_OF_OPCODES; i++) {
 		if (strstr(command, opcodes[i])) {
+			if (i == 3) {	/*we check if the command contains the opcode's name, need to handle special case of "or" contained in "xor"*/
+				if (strstr(command, "xor")) {
+					return i+1;
+				}
+			}
 			return i;
 		}
 	}
@@ -447,7 +466,7 @@ void writeIMemFile(FILE* imemOutput) {
   Write all commands to imemin.txt file.
   Write all .word pseudo commands to dmemin.txt. file.
 
-  Argumnets imemOutput and dmemOutput are to be said imemin.txt. and dmemin.txt respectively.
+  Arguments imemOutput and dmemOutput are to be said imemin.txt. and dmemin.txt respectively.
 */
 void writeMemOutput(FILE* inputFile, FILE* imemOutput, FILE* dmemOutput) {
 	int i;
@@ -463,6 +482,7 @@ void writeMemOutput(FILE* inputFile, FILE* imemOutput, FILE* dmemOutput) {
 			}
 			analyzeCommand(line, 'L');
 		}
+		
 		else {
 			analyzeCommand(line, 'N');
 		}
@@ -477,10 +497,10 @@ int main(int argc, char **argv) {
 	FILE * input, *imemOutput, *dmemOutput;
 	printf("Started\n");
 	input = fopen(argv[1], "r");
-	imemOutput = fopen(argv[2], "a");
-	dmemOutput = fopen(argv[3], "a");
+	imemOutput = fopen(argv[2], "w");
+	dmemOutput = fopen(argv[3], "w");
 	prepareLabels(input);
-	numOfCommands = PC-1;
+	numOfCommands = PC;
 	PC = 0;
 	labelsDS;
 	rewind(input);
